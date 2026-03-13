@@ -24,9 +24,15 @@ internal sealed class FuncionarioConfiguration : IEntityTypeConfiguration<Funcio
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(f => f.Cpf)
-            .IsRequired()
-            .HasMaxLength(14);
+        // ─── Cpf (Value Object → Owned Entity) ───────────────────────────────
+        // Persiste apenas o número sem máscara (11 dígitos) como coluna "Cpf"
+        builder.OwnsOne(f => f.Cpf, cpf =>
+        {
+            cpf.Property(c => c.Numero)
+                .HasColumnName("Cpf")
+                .IsRequired()
+                .HasMaxLength(11);
+        });
 
         builder.Property(f => f.Matricula)
             .IsRequired()
@@ -35,10 +41,8 @@ internal sealed class FuncionarioConfiguration : IEntityTypeConfiguration<Funcio
         builder.HasIndex(f => new { f.EmpresaId, f.Matricula })
             .IsUnique()
             .HasDatabaseName("IX_Funcionarios_EmpresaId_Matricula");
-
-        builder.HasIndex(f => new { f.EmpresaId, f.Cpf })
-            .IsUnique()
-            .HasDatabaseName("IX_Funcionarios_EmpresaId_Cpf");
+        // NOTA: o índice único EmpresaId+Cpf é gerado via SQL na migration
+        // (owned types não permitem HasIndex externo por shadow property em EF Core 8)
 
         builder.Property(f => f.DataAdmissao)
             .IsRequired();

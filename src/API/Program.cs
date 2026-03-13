@@ -27,6 +27,10 @@ builder.Services.AddProblemDetails();
 // ─── Use Cases (Application Layer) ───────────────────────────────────────────
 builder.Services.AddScoped<UploadResumoFolhaUseCase>();
 builder.Services.AddScoped<AnalisarRegistrosComIaUseCase>();
+builder.Services.AddScoped<CadastrarFuncionarioUseCase>();
+builder.Services.AddScoped<AdmitirFuncionarioUseCase>();
+builder.Services.AddScoped<ListarFuncionariosUseCase>();
+builder.Services.AddScoped<DemitirFuncionarioUseCase>();
 
 // ─── Infrastructure (EF Core + Repositórios + UnitOfWork) ────────────────────
 builder.Services.AddInfrastructure(builder.Configuration);

@@ -40,6 +40,7 @@ public static class InfrastructureServiceExtensions
         // ─── Repositórios ─────────────────────────────────────────────────────
         services.AddScoped<IFuncionarioRepository, FuncionarioRepository>();
         services.AddScoped<IRegistroPontoRepository, RegistroPontoRepository>();
+        services.AddScoped<IAdmissaoRepository, AdmissaoRepository>();
 
         // ─── Unit of Work ─────────────────────────────────────────────────────
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();

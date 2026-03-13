@@ -1,3 +1,9 @@
 global using Xunit;
 global using FluentAssertions;
 global using Moq;
+global using Domain.Entities;
+global using Domain.ValueObjects;
+global using Domain.Enums;
+global using Domain.Services;
+global using Application.Interfaces;
+global using Application.DTOs;

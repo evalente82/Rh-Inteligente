@@ -22,6 +22,45 @@ namespace Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Domain.Entities.Admissao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Cargo")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateOnly>("DataAdmissao")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("DataDemissao")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FuncionarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Regime")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("SalarioBase")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FuncionarioId");
+
+                    b.HasIndex("EmpresaId", "FuncionarioId")
+                        .HasDatabaseName("IX_Admissoes_EmpresaId_FuncionarioId");
+
+                    b.ToTable("Admissoes", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.AlertaAnomalia", b =>
                 {
                     b.Property<Guid>("Id")
@@ -76,11 +115,6 @@ namespace Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Cpf")
-                        .IsRequired()
-                        .HasMaxLength(14)
-                        .HasColumnType("character varying(14)");
-
                     b.Property<DateTime>("DataAdmissao")
                         .HasColumnType("timestamp with time zone");
 
@@ -101,10 +135,6 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("EmpresaId", "Cpf")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Funcionarios_EmpresaId_Cpf");
 
                     b.HasIndex("EmpresaId", "Matricula")
                         .IsUnique()
@@ -155,8 +185,95 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("RegistrosPonto", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.Admissao", b =>
+                {
+                    b.HasOne("Domain.Entities.Funcionario", null)
+                        .WithMany("Admissoes")
+                        .HasForeignKey("FuncionarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Domain.ValueObjects.Endereco", "EnderecoResidencial", b1 =>
+                        {
+                            b1.Property<Guid>("AdmissaoId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Bairro")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("EndBairro");
+
+                            b1.Property<string>("Cep")
+                                .IsRequired()
+                                .HasMaxLength(8)
+                                .HasColumnType("character(8)")
+                                .HasColumnName("EndCep")
+                                .IsFixedLength();
+
+                            b1.Property<string>("Cidade")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("EndCidade");
+
+                            b1.Property<string>("Complemento")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("EndComplemento");
+
+                            b1.Property<string>("Logradouro")
+                                .IsRequired()
+                                .HasMaxLength(300)
+                                .HasColumnType("character varying(300)")
+                                .HasColumnName("EndLogradouro");
+
+                            b1.Property<string>("Numero")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("EndNumero");
+
+                            b1.Property<string>("Uf")
+                                .IsRequired()
+                                .HasMaxLength(2)
+                                .HasColumnType("character(2)")
+                                .HasColumnName("EndUf")
+                                .IsFixedLength();
+
+                            b1.HasKey("AdmissaoId");
+
+                            b1.ToTable("Admissoes");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AdmissaoId");
+                        });
+
+                    b.Navigation("EnderecoResidencial")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Domain.Entities.Funcionario", b =>
                 {
+                    b.OwnsOne("Domain.ValueObjects.Cpf", "Cpf", b1 =>
+                        {
+                            b1.Property<Guid>("FuncionarioId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Numero")
+                                .IsRequired()
+                                .HasMaxLength(11)
+                                .HasColumnType("character varying(11)")
+                                .HasColumnName("Cpf");
+
+                            b1.HasKey("FuncionarioId");
+
+                            b1.ToTable("Funcionarios");
+
+                            b1.WithOwner()
+                                .HasForeignKey("FuncionarioId");
+                        });
+
                     b.OwnsOne("Domain.ValueObjects.TurnoTrabalho", "TurnoContratual", b1 =>
                         {
                             b1.Property<Guid>("FuncionarioId")
@@ -182,6 +299,9 @@ namespace Infrastructure.Persistence.Migrations
                                 .HasForeignKey("FuncionarioId");
                         });
 
+                    b.Navigation("Cpf")
+                        .IsRequired();
+
                     b.Navigation("TurnoContratual")
                         .IsRequired();
                 });
@@ -197,6 +317,8 @@ namespace Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Funcionario", b =>
                 {
+                    b.Navigation("Admissoes");
+
                     b.Navigation("RegistrosPonto");
                 });
 #pragma warning restore 612, 618

@@ -1,7 +1,3 @@
-using Domain.Entities;
-using Domain.ValueObjects;
-using FluentAssertions;
-
 namespace Domain.Tests.Entities;
 
 public sealed class FuncionarioTests
@@ -10,6 +6,8 @@ public sealed class FuncionarioTests
     private static readonly Guid EmpresaIdValido = Guid.NewGuid();
     private static readonly TurnoTrabalho TurnoPadrao =
         new(new TimeOnly(8, 0), new TimeOnly(17, 0), TimeSpan.FromHours(1));
+    // CPF válido (dígito verificador correto)
+    private static readonly Cpf CpfValido = new("529.982.247-25");
 
     // =========================================================
     // Testes do factory method Criar()
@@ -22,7 +20,7 @@ public sealed class FuncionarioTests
         var funcionario = Funcionario.Criar(
             empresaId: EmpresaIdValido,
             nome: "João Silva",
-            cpf: "123.456.789-00",
+            cpf: CpfValido,
             matricula: "F001",
             dataAdmissao: new DateTime(2024, 1, 15),
             turnoContratual: TurnoPadrao);
@@ -31,7 +29,7 @@ public sealed class FuncionarioTests
         funcionario.Id.Should().NotBeEmpty();
         funcionario.EmpresaId.Should().Be(EmpresaIdValido);
         funcionario.Nome.Should().Be("João Silva");
-        funcionario.Cpf.Should().Be("123.456.789-00");
+        funcionario.Cpf.Should().Be(CpfValido);
         funcionario.Matricula.Should().Be("F001");
         funcionario.Ativo.Should().BeTrue();
         funcionario.DataDemissao.Should().BeNull();
@@ -45,7 +43,7 @@ public sealed class FuncionarioTests
         var act = () => Funcionario.Criar(
             empresaId: Guid.Empty,
             nome: "João Silva",
-            cpf: "123.456.789-00",
+            cpf: CpfValido,
             matricula: "F001",
             dataAdmissao: DateTime.UtcNow,
             turnoContratual: TurnoPadrao);
@@ -60,7 +58,7 @@ public sealed class FuncionarioTests
     [InlineData("   ")]
     public void Criar_QuandoNomeVazioOuEspacos_DeveLancarArgumentException(string nome)
     {
-        var act = () => Funcionario.Criar(EmpresaIdValido, nome, "123", "F001", DateTime.UtcNow, TurnoPadrao);
+        var act = () => Funcionario.Criar(EmpresaIdValido, nome, CpfValido, "F001", DateTime.UtcNow, TurnoPadrao);
         act.Should().Throw<ArgumentException>();
     }
 
@@ -69,14 +67,14 @@ public sealed class FuncionarioTests
     [InlineData("   ")]
     public void Criar_QuandoMatriculaVaziaOuEspacos_DeveLancarArgumentException(string matricula)
     {
-        var act = () => Funcionario.Criar(EmpresaIdValido, "Nome", "123", matricula, DateTime.UtcNow, TurnoPadrao);
+        var act = () => Funcionario.Criar(EmpresaIdValido, "Nome", CpfValido, matricula, DateTime.UtcNow, TurnoPadrao);
         act.Should().Throw<ArgumentException>();
     }
 
     [Fact]
     public void Criar_QuandoTurnoNulo_DeveLancarArgumentNullException()
     {
-        var act = () => Funcionario.Criar(EmpresaIdValido, "João", "123", "F001", DateTime.UtcNow, null!);
+        var act = () => Funcionario.Criar(EmpresaIdValido, "João", CpfValido, "F001", DateTime.UtcNow, null!);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -143,6 +141,6 @@ public sealed class FuncionarioTests
 
     // --- Helper ---
     private static Funcionario CriarFuncionarioValido() =>
-        Funcionario.Criar(EmpresaIdValido, "João Silva", "12345678900", "F001",
+        Funcionario.Criar(EmpresaIdValido, "João Silva", CpfValido, "F001",
             new DateTime(2024, 3, 1), TurnoPadrao);
 }

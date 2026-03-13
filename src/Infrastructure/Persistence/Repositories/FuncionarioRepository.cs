@@ -27,6 +27,7 @@ internal sealed class FuncionarioRepository : IFuncionarioRepository
     {
         return await _context.Funcionarios
             .Include(f => f.RegistrosPonto)
+            .Include(f => f.Admissoes)
             .FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
     }
 
@@ -36,6 +37,7 @@ internal sealed class FuncionarioRepository : IFuncionarioRepository
         CancellationToken cancellationToken = default)
     {
         return await _context.Funcionarios
+            .Include(f => f.Admissoes)
             .FirstOrDefaultAsync(f => f.Matricula == matricula, cancellationToken);
     }
 
@@ -44,6 +46,7 @@ internal sealed class FuncionarioRepository : IFuncionarioRepository
         CancellationToken cancellationToken = default)
     {
         return await _context.Funcionarios
+            .Include(f => f.Admissoes)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }

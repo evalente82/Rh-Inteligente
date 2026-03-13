@@ -28,7 +28,7 @@ public sealed class AnalisarRegistrosComIaUseCaseTests
         new(new TimeOnly(8, 0), new TimeOnly(17, 0), TimeSpan.FromHours(1));
 
     private static Funcionario CriarFuncionarioValido() =>
-        Funcionario.Criar(EmpresaId, "Maria Oliveira", "98765432100",
+        Funcionario.Criar(EmpresaId, "Maria Oliveira", new Cpf("529.982.247-25"),
             "F010", new DateTime(2024, 1, 1), TurnoPadrao);
 
     // =========================================================

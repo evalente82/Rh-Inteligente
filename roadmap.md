@@ -34,6 +34,30 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
 
 #### 📦 Histórico de Entregas
 
+##### `feat(infra-dev): provisiona container Postgres e aplica migration InitialCreate` — 13/03/2026
+> Container Docker `vcorp_rh_dev` (postgres:15-alpine) criado na porta 5435 com restart automático.
+> Migration `InitialCreate` aplicada com sucesso: 4 tabelas criadas no banco `vcorp_rh_dev`.
+> Connection string do `appsettings.Development.json` atualizada para as novas credenciais.
+
+**Detalhes do container:**
+- **Nome:** `vcorp_rh_dev`
+- **Imagem:** `postgres:15-alpine`
+- **Porta host:** `5435` → `5432` (container)
+- **Database:** `vcorp_rh_dev`
+- **Usuário:** `vcorp` / **Senha:** `vcorp123`
+- **Restart policy:** `unless-stopped`
+
+**Tabelas criadas:**
+- `public.Funcionarios` — agregado raiz com TurnoTrabalho (OwnsOne) e EmpresaId (multi-tenant)
+- `public.RegistrosPonto` — batidas de ponto com TipoBatida como string
+- `public.AlertasAnomalia` — alertas gerados pela IA com gravidade 1–3
+- `public.__EFMigrationsHistory` — controle de migrations do EF Core
+
+**Arquivo atualizado:**
+- `src/API/appsettings.Development.json` — `Port=5435`, `Username=vcorp`, `Password=vcorp123`
+
+---
+
 ##### `feat(mobile): implementa app Flutter — MeusRegistrosPonto com PontoApiService` — 13/03/2026
 > App Flutter do Módulo 1 completo: Flutter 3.32.4 / Dart 3.8.1, http + intl + flutter_localizations.
 > Tela MeusRegistrosPontoScreen com FutureBuilder, filtro de período (DatePicker PT-BR),
@@ -194,5 +218,82 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
   * `TurnoTrabalho` não suporta turnos que cruzam a meia-noite (ex: 22h–06h). Para turnos noturnos, a `HoraSaida` deve ser representada como `DateTime` do dia seguinte — a ser tratado no Use Case de análise.
   * `CalculoHoraExtraService.CalcularHorasNoturnas()` usa iteração por minuto (O(n)); candidato a otimização antes de entrar em produção.
 
-### Módulo 2: [Próximo Módulo - Ex: Gestão de Benefícios ou Admissão]
-* [A ser mapeado no futuro]
+### Módulo 2: Gestão de Funcionários e Admissão
+* **Descrição:** CRUD completo de funcionários, controle de admissão/demissão, regimes de contratação (CLT/PJ/Estágio). Base obrigatória para os perfis Colaborador e Gestor operarem de forma autônoma.
+* **Status Geral:** ✅ Concluído
+
+---
+
+#### 📦 Histórico de Entregas
+
+##### `feat(modulo2): implementa Gestão de Funcionários — Domain, Application, Infrastructure e API` — 13/03/2026
+> Módulo 2 completo: Value Objects `Cpf` (validação módulo 11) e `Endereco`, entidade `Admissao`,
+> enum `RegimeContratacao`, 4 Use Cases com testes, persistência EF Core 8 com owned types,
+> migration `AddAdmissaoAndCpfVO` e `FuncionarioController` com 5 endpoints REST.
+> 95/95 testes unitários passando. Solução completa sem erros de build.
+
+**Camada Domain (entregues):**
+- `src/Domain/Enums/RegimeContratacao.cs` — Clt=1, Pj=2, Estagio=3, Temporario=4
+- `src/Domain/ValueObjects/Cpf.cs` — sealed record; validação dígito verificador (módulo 11); rejeita sequências repetidas; `NumeroFormatado` (000.000.000-00); `TentarCriar()` sem throw
+- `src/Domain/ValueObjects/Endereco.cs` — sealed record; Logradouro, Numero, Bairro, Cidade, Uf (2 chars), Cep (8 dígitos), Complemento?; `CepFormatado`
+- `src/Domain/Entities/Admissao.cs` — factory `Criar(...)`, `Demitir(DateOnly)`, `ReajustarSalario(decimal)`, `AtualizarEndereco(Endereco)`; guard: salário > 0, DataAdmissao máx. 30 dias no futuro
+- `src/Domain/Entities/Funcionario.cs` — ATUALIZADO: `Cpf` mudou de `string` para `Cpf` VO; adicionada lista `Admissoes` e propriedade `AdmissaoAtiva`
+
+**Camada Application (entregues):**
+- `src/Application/DTOs/CadastrarFuncionarioInputDTO.cs` — EmpresaId, Nome, Cpf (string), Matricula, DataAdmissao, HoraEntrada, HoraSaida, IntervaloAlmocoMinutos
+- `src/Application/DTOs/AdmitirFuncionarioInputDTO.cs` — EmpresaId, FuncionarioId, Cargo, SalarioBase, Regime, DataAdmissao + campos de Endereco
+- `src/Application/DTOs/FuncionarioOutputDTO.cs` — projeção completa com dados de admissão ativa
+- `src/Application/Interfaces/IAdmissaoRepository.cs` — `ObterAdmissaoAtivaAsync`, `AdicionarAsync`, `Atualizar`
+- `src/Application/UseCases/CadastrarFuncionarioUseCase.cs` — valida CPF, garante matrícula única, persiste e retorna DTO
+- `src/Application/UseCases/AdmitirFuncionarioUseCase.cs` — valida funcionário existente, sem admissão ativa, cria Admissao
+- `src/Application/UseCases/ListarFuncionariosUseCase.cs` — `ExecutarAsync` (lista) + `ExecutarPorIdAsync` (detalhe)
+- `src/Application/UseCases/DemitirFuncionarioUseCase.cs` — encerra Admissao ativa + chama `Funcionario.Demitir()`
+
+**Camada Infrastructure (entregues):**
+- `src/Infrastructure/Persistence/Configurations/FuncionarioConfiguration.cs` — ATUALIZADO: Cpf mapeado como OwnsOne com coluna "Cpf" (varchar 11)
+- `src/Infrastructure/Persistence/Configurations/AdmissaoConfiguration.cs` — Admissao com EnderecoResidencial mapeado como OwnsOne (7 colunas End*)
+- `src/Infrastructure/Persistence/Repositories/AdmissaoRepository.cs` — implementa `IAdmissaoRepository`
+- `src/Infrastructure/Persistence/Repositories/FuncionarioRepository.cs` — ATUALIZADO: `Include(f => f.Admissoes)` em todos os métodos
+- `src/Infrastructure/Persistence/RhInteligenteDbContext.cs` — ATUALIZADO: `DbSet<Admissao>` + Global Query Filter multi-tenant
+- `src/Infrastructure/InfrastructureServiceExtensions.cs` — ATUALIZADO: `AddScoped<IAdmissaoRepository, AdmissaoRepository>()`
+- `src/Infrastructure/Persistence/Migrations/20260313133545_AddAdmissaoAndCpfVO.cs` — tabela `Admissoes`, ajuste Cpf varchar(14→11), índice único EmpresaId+Cpf via SQL raw
+
+**Camada API (entregues):**
+- `src/API/Controllers/FuncionarioController.cs` — rota `api/{empresaId:guid}/funcionarios`: POST (201), GET (200), GET `/{id}` (200), POST `/{id}/admissao` (200), DELETE `/{id}` (204)
+- `src/API/Program.cs` — ATUALIZADO: 4 novos Use Cases registrados como Scoped
+
+**Testes (entregues):**
+- `tests/Domain.Tests/ValueObjects/CpfTests.cs` — 9 testes (válidos, inválidos, formatação, módulo 11)
+- `tests/Domain.Tests/Entities/AdmissaoTests.cs` — 9 testes (criação, demissão, reajuste, guards)
+- `tests/Domain.Tests/UseCases/CadastrarFuncionarioUseCaseTests.cs` — 4 testes
+- `tests/Domain.Tests/UseCases/AdmitirFuncionarioUseCaseTests.cs` — 3 testes
+- `tests/Domain.Tests/UseCases/ListarFuncionariosUseCaseTests.cs` — 3 testes
+- `tests/Domain.Tests/UseCases/DemitirFuncionarioUseCaseTests.cs` — 4 testes
+- **Total: 95/95 testes passando** ✅
+
+---
+
+#### Escopo Técnico
+
+| Camada | Status |
+|---|---|
+| **Domain** | ✅ `Cpf` VO, `Endereco` VO, `Admissao`, `RegimeContratacao`, `Funcionario` atualizado |
+| **Application** | ✅ 4 Use Cases + 3 DTOs + `IAdmissaoRepository` |
+| **Infrastructure** | ✅ `AdmissaoConfiguration`, `AdmissaoRepository`, migration `AddAdmissaoAndCpfVO` |
+| **API** | ✅ `FuncionarioController` — 5 endpoints |
+| **Testes** | ✅ 95/95 passando |
+
+---
+
+### Módulo 3: Motor de IA Gemini + RAG (CCT Reader + Auditoria Real)
+* **Descrição:** Implementação real de `IAuditorIaService` via Google Gemini 1.5 Flash. Upload de PDF de Convenção Coletiva → vetorização no Qdrant (já no Docker) → RAG para auditoria autônoma de pontos e Dashboard de Risco Trabalhista. Referência: Protótipo HTML — perfil Dono (Termômetro de Conformidade, Agente CCT, Fechador de Folha).
+* **Status Geral:** ⏳ Planejado
+
+#### Escopo Técnico
+
+| Camada | Entregas |
+|---|---|
+| **Infrastructure** | `GeminiAuditorIaService` (impl. `IAuditorIaService`), `QdrantVectorRepository`, `CctPdfParserService` (PDF → chunks → embeddings Gemini) |
+| **Application** | `ProcessarCctUseCase`, `GerarHoleriteNarrativoUseCase` |
+| **API** | `CctController` — `POST /{empresaId}/cct/upload` (202), `GET /{empresaId}/regras` |
+| **Integração** | Qdrant rodando em `localhost:6333` (já no Docker), `GeminiApiKey` via `appsettings` |

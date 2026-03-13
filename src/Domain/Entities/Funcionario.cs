@@ -14,7 +14,10 @@ public sealed class Funcionario
     public Guid EmpresaId { get; private set; }
 
     public string Nome { get; private set; } = string.Empty;
-    public string Cpf { get; private set; } = string.Empty;
+
+    /// <summary>CPF validado como Value Object (dígito verificador).</summary>
+    public Cpf Cpf { get; private set; } = default!;
+
     public string Matricula { get; private set; } = string.Empty;
     public DateTime DataAdmissao { get; private set; }
     public DateTime? DataDemissao { get; private set; }
@@ -28,6 +31,12 @@ public sealed class Funcionario
     private readonly List<RegistroPonto> _registrosPonto = [];
     public IReadOnlyCollection<RegistroPonto> RegistrosPonto => _registrosPonto.AsReadOnly();
 
+    private readonly List<Admissao> _admissoes = [];
+    public IReadOnlyCollection<Admissao> Admissoes => _admissoes.AsReadOnly();
+
+    /// <summary>Admissão ativa atual (pode ser null se ainda não admitido formalmente).</summary>
+    public Admissao? AdmissaoAtiva => _admissoes.FirstOrDefault(a => a.Ativa);
+
     // Construtor privado — força uso do factory method
     private Funcionario() { }
 
@@ -37,7 +46,7 @@ public sealed class Funcionario
     public static Funcionario Criar(
         Guid empresaId,
         string nome,
-        string cpf,
+        Cpf cpf,
         string matricula,
         DateTime dataAdmissao,
         TurnoTrabalho turnoContratual)
@@ -46,9 +55,8 @@ public sealed class Funcionario
             throw new ArgumentException("EmpresaId não pode ser vazio.", nameof(empresaId));
 
         ArgumentException.ThrowIfNullOrWhiteSpace(nome);
-        ArgumentException.ThrowIfNullOrWhiteSpace(cpf);
+        ArgumentNullException.ThrowIfNull(cpf);
         ArgumentException.ThrowIfNullOrWhiteSpace(matricula);
-
         ArgumentNullException.ThrowIfNull(turnoContratual);
 
         return new Funcionario
@@ -56,7 +64,7 @@ public sealed class Funcionario
             Id = Guid.NewGuid(),
             EmpresaId = empresaId,
             Nome = nome.Trim(),
-            Cpf = cpf.Trim(),
+            Cpf = cpf,
             Matricula = matricula.Trim(),
             DataAdmissao = dataAdmissao,
             TurnoContratual = turnoContratual
@@ -80,3 +88,4 @@ public sealed class Funcionario
         TurnoContratual = novoTurno;
     }
 }
+

@@ -112,7 +112,7 @@ public sealed class CalculoHoraExtraServiceTests
             new TimeOnly(23, 59),
             TimeSpan.FromHours(1));
 
-        var funcionario = Funcionario.Criar(EmpresaId, "Maria Santos", "98765432100", "F002",
+        var funcionario = Funcionario.Criar(EmpresaId, "Maria Santos", new Cpf("529.982.247-25"), "F002",
             new DateTime(2024, 1, 1), turnoEstendido);
 
         var data = new DateTime(2025, 3, 10);
@@ -153,7 +153,7 @@ public sealed class CalculoHoraExtraServiceTests
     // =========================================================
 
     private static Funcionario CriarFuncionario() =>
-        Funcionario.Criar(EmpresaId, "João Silva", "12345678900", "F001",
+        Funcionario.Criar(EmpresaId, "João Silva", new Cpf("529.982.247-25"), "F001",
             new DateTime(2024, 1, 1), TurnoPadrao);
 
     private static List<RegistroPonto> CriarBatidasDoDia(
