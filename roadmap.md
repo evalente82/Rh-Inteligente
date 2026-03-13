@@ -286,14 +286,66 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
 ---
 
 ### Módulo 3: Motor de IA Gemini + RAG (CCT Reader + Auditoria Real)
-* **Descrição:** Implementação real de `IAuditorIaService` via Google Gemini 1.5 Flash. Upload de PDF de Convenção Coletiva → vetorização no Qdrant (já no Docker) → RAG para auditoria autônoma de pontos e Dashboard de Risco Trabalhista. Referência: Protótipo HTML — perfil Dono (Termômetro de Conformidade, Agente CCT, Fechador de Folha).
-* **Status Geral:** ⏳ Planejado
+* **Descrição:** Implementação real de `IAuditorIaService` via Google Gemini 2.5 Flash. Upload de PDF de Convenção Coletiva → vetorização no Qdrant → RAG para auditoria autônoma de pontos. Holerite narrativo gerado por IA com contexto de CCT.
+* **Status Geral:** ✅ Concluído
+
+---
+
+#### 📦 Histórico de Entregas
+
+##### `feat(modulo3): implementa Motor de IA Gemini 2.5 Flash + RAG Qdrant — CCT Reader e Auditoria Real`
+> Módulo 3 completo: pipeline RAG com PdfPig (extração de texto), Gemini text-embedding-004 (768 dims),
+> Qdrant gRPC (vetorização isolada por tenant), Gemini 2.5 Flash (auditoria + holerite narrativo).
+> CctController com 2 endpoints, InfrastructureServiceExtensions atualizado, 109/109 testes passando.
+
+**Pacotes NuGet (Infrastructure):**
+- `Mscc.GenerativeAI` 1.9.2 — SDK Gemini (chat: `gemini-2.5-flash`, embedding: `text-embedding-004`)
+- `Qdrant.Client` 1.12.0 — cliente gRPC para o banco vetorial (porta 6334)
+- `PdfPig` 0.1.9 — extração de texto de PDF (chunk splitting por palavras)
+
+**Camada Application (entregues):**
+- `src/Application/Interfaces/IVectorRepository.cs` — `GarantirColecaoAsync`, `SalvarChunksAsync`, `BuscarSimilaresAsync`; record `ChunkVetorizado`
+- `src/Application/Interfaces/IEmbeddingService.cs` — `GerarEmbeddingAsync`, `GerarEmbeddingLoteAsync`
+- `src/Application/Interfaces/ICctPdfParser.cs` — `Extrair(bytes, nomeArquivo)`; record `ChunkTexto`
+- `src/Application/DTOs/UploadCctInputDTO.cs` — EmpresaId, NomeArquivo, ConteudoPdf (byte[])
+- `src/Application/DTOs/HoleriteNarrativoOutputDTO.cs` — FuncionarioId, NomeFuncionario, Periodo, TextoNarrativo, TotalAnomalias, TotalHorasExtras, GeradoEm
+- `src/Application/UseCases/ProcessarCctUseCase.cs` — GarantirColecao → Extrair → GerarEmbeddingLote → SalvarChunks; DimensaoVetor=768
+- `src/Application/UseCases/GerarHoleriteNarrativoUseCase.cs` — BuscarFuncionario → ListarRegistros → AnalisarIA → MontarNarrativa
+
+**Camada Infrastructure/AI (entregues):**
+- `src/Infrastructure/AI/GeminiOptions.cs` — `ApiKey`, `ModeloChat = "gemini-2.5-flash"`
+- `src/Infrastructure/AI/QdrantOptions.cs` — `Host = "localhost"`, `Porta = 6334`
+- `src/Infrastructure/AI/CctPdfParserService.cs` — PdfPig, chunk splitting sem cortar palavras (~1500 chars)
+- `src/Infrastructure/AI/GeminiEmbeddingService.cs` — `EmbedContent(List<EmbedContentRequest>)` batch; lotes de 100; retorna `float[]` 768 dims
+- `src/Infrastructure/AI/QdrantVectorRepository.cs` — gRPC Qdrant; coleção `cct_{empresaId:N}`; `Distance.Cosine`; payload: texto, fonte, pagina, empresa_id
+- `src/Infrastructure/AI/GeminiAuditorIaService.cs` — RAG: embedding consulta → BuscarSimilaresAsync top-5 → System Prompt + contexto CCT → Gemini 2.5 Flash → parse JSON anomalias
+- `src/Infrastructure/AI/AnomaliaJsonParser.cs` — helper interno testável; mapa 8 tipos Gemini → `TipoAnomalia` do domínio; remove markdown; clamp gravidade 1–3
+
+**Camada API (entregues):**
+- `src/API/Controllers/CctController.cs` — `POST api/{empresaId}/cct/upload` (202 Accepted) | `GET api/{empresaId}/cct/holerite/{funcionarioId}` (200 OK)
+- `src/API/Program.cs` — ATUALIZADO: `ProcessarCctUseCase` e `GerarHoleriteNarrativoUseCase` registrados como Scoped
+- `src/API/appsettings.Development.json` — ATUALIZADO: seção `Gemini` (ApiKey, ModeloChat) e `Qdrant` (Host, Porta)
+- `src/Infrastructure/InfrastructureServiceExtensions.cs` — ATUALIZADO: `Configure<GeminiOptions>`, `Configure<QdrantOptions>`, 4 novos Scoped (IAuditorIaService, IEmbeddingService, IVectorRepository, ICctPdfParser)
+
+**Testes (entregues):**
+- `tests/Domain.Tests/UseCases/ProcessarCctUseCaseTests.cs` — 4 testes (pipeline completo, PDF vazio, PDF sem texto, input nulo)
+- `tests/Domain.Tests/UseCases/GerarHoleriteNarrativoUseCaseTests.cs` — 4 testes (sem anomalias, com anomalias, funcionário não encontrado, período inválido)
+- `tests/Domain.Tests/UseCases/GeminiAuditorIaServiceJsonParserTests.cs` — 6 testes (JSON vazio, markdown, malformado, 1 anomalia, múltiplos tipos, gravidade clampada)
+- **Total: 109/109 testes passando** ✅
+
+**Configuração necessária (antes de usar em produção):**
+- Substituir `"SUA_GEMINI_API_KEY_AQUI"` em `appsettings.Development.json` pela chave real do Google AI Studio
+- Subir container Qdrant: `docker run -d --name vcorp_qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant`
+
+---
 
 #### Escopo Técnico
 
-| Camada | Entregas |
+| Camada | Status |
 |---|---|
-| **Infrastructure** | `GeminiAuditorIaService` (impl. `IAuditorIaService`), `QdrantVectorRepository`, `CctPdfParserService` (PDF → chunks → embeddings Gemini) |
-| **Application** | `ProcessarCctUseCase`, `GerarHoleriteNarrativoUseCase` |
-| **API** | `CctController` — `POST /{empresaId}/cct/upload` (202), `GET /{empresaId}/regras` |
-| **Integração** | Qdrant rodando em `localhost:6333` (já no Docker), `GeminiApiKey` via `appsettings` |
+| **Infrastructure/AI** | ✅ `GeminiEmbeddingService`, `GeminiAuditorIaService`, `QdrantVectorRepository`, `CctPdfParserService`, `AnomaliaJsonParser` |
+| **Application** | ✅ 2 Use Cases + 3 Interfaces + 2 DTOs |
+| **API** | ✅ `CctController` — 2 endpoints (upload CCT + holerite narrativo) |
+| **Testes** | ✅ 109/109 passando |
+
+---

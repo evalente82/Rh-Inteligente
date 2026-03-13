@@ -1,4 +1,5 @@
 using Application.Interfaces;
+using Infrastructure.AI;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +45,17 @@ public static class InfrastructureServiceExtensions
 
         // ─── Unit of Work ─────────────────────────────────────────────────────
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+
+        // ─── IA / RAG (Módulo 3) ──────────────────────────────────────────────
+        services.Configure<GeminiOptions>(
+            configuration.GetSection(GeminiOptions.SecaoConfig));
+        services.Configure<QdrantOptions>(
+            configuration.GetSection(QdrantOptions.SecaoConfig));
+
+        services.AddScoped<IAuditorIaService, GeminiAuditorIaService>();
+        services.AddScoped<IEmbeddingService, GeminiEmbeddingService>();
+        services.AddScoped<IVectorRepository, QdrantVectorRepository>();
+        services.AddScoped<ICctPdfParser, CctPdfParserService>();
 
         return services;
     }

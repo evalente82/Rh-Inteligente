@@ -1,0 +1,53 @@
+## Variáveis de ambiente — NUNCA versionar
+.env
+.env.local
+.env.*.local
+
+## Segredos de produção
+appsettings.Production.json
+appsettings.*.Secret.json
+secrets.json
+
+## .NET build outputs
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+## Logs
+*.log
+logs/
+
+## Publicação
+publish/
+out/
+
+## Node / Frontend
+node_modules/
+dist/
+.cache/
+
+## Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+*.g.dart
+*.freezed.dart
+
+## Docker
+docker-compose.override.yml
+
+## Certificados
+*.pfx
+*.pem
+*.key
+*.crt
+
+## OS
+.DS_Store
+Thumbs.db
+Desktop.ini
