@@ -34,6 +34,31 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
 
 #### 📦 Histórico de Entregas
 
+##### `feat(infrastructure): implementa camada de persistência — EF Core 8, repositórios e multi-tenant` — 13/03/2026
+> Camada Infrastructure do Módulo 1 completa: DbContext com Global Query Filters por EmpresaId
+> (Regra 5 inegociável), 3 EntityTypeConfigurations mapeadas para Postgres, repositórios concretos,
+> EfUnitOfWork, ITenantProvider via HttpContext e InfrastructureServiceExtensions para registro no DI.
+> Build e 58/58 testes passando sem regressões.
+
+**Arquivos entregues:**
+- `src/Infrastructure/Infrastructure.csproj` — net8.0, EF Core 8.0.0, Npgsql 8.0.0, FrameworkReference AspNetCore.App
+- `src/Infrastructure/ITenantProvider.cs` — contrato de resolução do tenant ativo por requisição
+- `src/Infrastructure/HttpContextTenantProvider.cs` — resolve EmpresaId via `Request.RouteValues["empresaId"]`
+- `src/Infrastructure/InfrastructureServiceExtensions.cs` — `AddInfrastructure()`: registra DbContext, repositórios, UnitOfWork e TenantProvider
+- `src/Infrastructure/Persistence/RhInteligenteDbContext.cs` — DbContext com Global Query Filters multi-tenant e `ApplyConfigurationsFromAssembly`
+- `src/Infrastructure/Persistence/EfUnitOfWork.cs` — `IUnitOfWork` delegando para `SaveChangesAsync`
+- `src/Infrastructure/Persistence/Configurations/FuncionarioConfiguration.cs` — TurnoContratual mapeado como OwnsOne, índices únicos por Matricula/Cpf + EmpresaId
+- `src/Infrastructure/Persistence/Configurations/RegistroPontoConfiguration.cs` — TipoBatida como string, índice de performance por FuncionarioId + DataHora
+- `src/Infrastructure/Persistence/Configurations/AlertaAnomaliaConfiguration.cs` — TipoAnomalia como string, índices por Resolvido/Gravidade para o dashboard
+- `src/Infrastructure/Persistence/Repositories/FuncionarioRepository.cs` — implementa `IFuncionarioRepository` com EF Core 8
+- `src/Infrastructure/Persistence/Repositories/RegistroPontoRepository.cs` — implementa `IRegistroPontoRepository` com filtro por período via DateOnly→DateTime
+- `src/API/API.csproj` — adicionada ProjectReference para Infrastructure.csproj
+- `src/API/Program.cs` — adicionada chamada `builder.Services.AddInfrastructure(builder.Configuration)`
+- `src/API/appsettings.json` — connection string `Postgres` adicionada
+- `src/API/appsettings.Development.json` — connection string para banco de desenvolvimento
+
+---
+
 ##### `feat(api): implementa camada de apresentação — FolhaPontoController, GlobalExceptionHandler e Program.cs` — 13/03/2026
 > Camada API (Presentation) do Módulo 1 completa: controller RESTful com dois endpoints
 > (POST upload 202 Accepted e GET anomalias 200 OK), tratamento global de exceções nativo
@@ -97,8 +122,12 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
 
 ---
 
-* **Camada de Dados (Postgres - Infrastructure):** ⏳ Pendente
-  * Tabelas: `Empresas`, `Funcionarios`, `RegistrosPonto`, `AnomaliasPonto`, `ResumosFolha`
+* **Camada de Dados (Postgres - Infrastructure):** ✅ Concluído
+  * `RhInteligenteDbContext`: Global Query Filter por EmpresaId em todas as entidades (Regra 5)
+  * Repositórios: `FuncionarioRepository`, `RegistroPontoRepository`
+  * `EfUnitOfWork`: `SaveChangesAsync` atômico por Use Case
+  * `ITenantProvider` / `HttpContextTenantProvider`: resolução do tenant via rota HTTP
+  * Configurações EF: `FuncionarioConfiguration` (OwnsOne TurnoTrabalho), `RegistroPontoConfiguration`, `AlertaAnomaliaConfiguration`
 
 * **Camada de Domínio (C# .NET - Domain):** ✅ Concluído
   * Entidades: `Funcionario`, `RegistroPonto`, `AlertaAnomalia`

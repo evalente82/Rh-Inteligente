@@ -1,5 +1,6 @@
 using API.Middleware;
 using Application.UseCases;
+using Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,10 +25,11 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 // ─── Use Cases (Application Layer) ───────────────────────────────────────────
-// As implementações concretas das interfaces (Infrastructure) serão registradas
-// aqui quando a camada Infrastructure for criada.
 builder.Services.AddScoped<UploadResumoFolhaUseCase>();
 builder.Services.AddScoped<AnalisarRegistrosComIaUseCase>();
+
+// ─── Infrastructure (EF Core + Repositórios + UnitOfWork) ────────────────────
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // ─── Pipeline ────────────────────────────────────────────────────────────────
 
