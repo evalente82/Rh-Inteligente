@@ -26,6 +26,8 @@ public sealed class RhInteligenteDbContext : DbContext
     public DbSet<RegistroPonto> RegistrosPonto => Set<RegistroPonto>();
     public DbSet<AlertaAnomalia> AlertasAnomalia => Set<AlertaAnomalia>();
     public DbSet<FechamentoFolha> FechamentosFolha => Set<FechamentoFolha>();
+    public DbSet<Contracheque> Contracheques => Set<Contracheque>();
+    public DbSet<ItemContracheque> ItensContracheque => Set<ItemContracheque>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,6 +49,9 @@ public sealed class RhInteligenteDbContext : DbContext
 
         modelBuilder.Entity<FechamentoFolha>()
             .HasQueryFilter(f => f.EmpresaId == _empresaId);
+
+        modelBuilder.Entity<Contracheque>()
+            .HasQueryFilter(c => c.EmpresaId == _empresaId);
 
         modelBuilder.Entity<Usuario>()
             .HasQueryFilter(u => u.EmpresaId == _empresaId);

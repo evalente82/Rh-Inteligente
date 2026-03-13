@@ -47,6 +47,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
         services.AddScoped<IAlertaAnomaliaQueryRepository, AlertaAnomaliaQueryRepository>();
         services.AddScoped<IFechamentoFolhaRepository, FechamentoFolhaRepository>();
+        services.AddScoped<IContrachequeRepository, ContrachequeRepository>();
 
         // ─── Unit of Work ─────────────────────────────────────────────────────
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();

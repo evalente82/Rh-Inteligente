@@ -453,3 +453,63 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
 | **Testes** | ✅ 174/174 passando |
 
 ---
+
+### Módulo 7: Folha de Pagamento — Contracheque e Encargos Previdenciários
+* **Descrição:** Geração de contracheques (holerites) por funcionário vinculados a um FechamentoFolha, com cálculo automático de INSS (tabela progressiva 2024), IRRF (tabela progressiva 2024) e FGTS (8% patronal). Operação idempotente: re-execuções para o mesmo fechamento ignoram funcionários já processados.
+* **Status Geral:** ✅ Concluído
+
+#### 📦 Histórico de Entregas
+
+##### `feat(modulo7): implementa Contracheque — Domain, Application, Infrastructure, API e Testes` — 13/03/2026
+> M7 completo: entidade Contracheque com backing field (EF Core 8), CalculoEncargosFolhaService
+> (INSS progressivo 2024 com teto R$908,86, IRRF progressivo 2024, FGTS 8%),
+> GerarContrachequeUseCase idempotente, migration AddContracheque aplicada,
+> ContrachequeController com 3 endpoints REST, 198/198 testes passando.
+
+**Domain:**
+- `src/Domain/Enums/TipoRubrica.cs` — Proventos: SalarioBase=1, HoraExtra50=2, HoraExtra100=3, AdicionalNoturno=4; Descontos: DescontoInss=10, DescontoIrrf=11, FgtsInformativo=12, DescontoAtraso=13
+- `src/Domain/Entities/ItemContracheque.cs` — rubrica do holerite; `EhDesconto` computed; `Contracheque? Contracheque` navigation para EF Core (backing field)
+- `src/Domain/Entities/Contracheque.cs` — agregado raiz; `Criar()`, `AdicionarItem()`, `RecalcularTotais()`; backing field `_itens`; `SalarioLiquido` computed (não persistido)
+- `src/Domain/Services/CalculoEncargosFolhaService.cs` — `Calcular(decimal salarioBruto)` → `ResultadoCalculoEncargos`; INSS tabela progressiva 2024 (4 faixas, teto R$908,86); IRRF tabela 2024 (5 faixas); FGTS 8%
+
+**Application:**
+- `src/Application/Interfaces/IContrachequeRepository.cs` — `ObterPorIdAsync`, `ListarPorFechamentoAsync`, `ExistePorFuncionarioEFechamentoAsync`, `AdicionarAsync`, `Atualizar`
+- `src/Application/DTOs/GerarContrachequeInputDTO.cs` — record: EmpresaId, FechamentoFolhaId
+- `src/Application/DTOs/ContrachequeOutputDTO.cs` — `ContrachequeOutputDTO` + `ItemContrachequeOutputDTO`
+- `src/Application/UseCases/GerarContrachequeUseCase.cs` — idempotente; por funcionário ativo: admissão → CalculoEncargos → Contracheque com rubricas (SalarioBase, INSS, IRRF, DescontoAtraso proporcional, FGTS)
+- `src/Application/UseCases/ListarContrachequesFolhaUseCase.cs` — leitura pura por fechamento
+- `src/Application/UseCases/ObterContrachequeUseCase.cs` — leitura por ID único
+
+**Infrastructure:**
+- `src/Infrastructure/Persistence/Configurations/ContrachequeConfiguration.cs` — `Navigation(c => c.Itens).UsePropertyAccessMode(Field)`; `SalarioLiquido` ignorado; índice único `FuncionarioId+FechamentoFolhaId`
+- `src/Infrastructure/Persistence/Configurations/ItemContrachequeConfiguration.cs` — `TipoRubrica` como string; `EhDesconto` ignorado
+- `src/Infrastructure/Persistence/Repositories/ContrachequeRepository.cs` — `Include("_itens")` nos métodos de busca
+- `src/Infrastructure/Persistence/RhInteligenteDbContext.cs` — ATUALIZADO: `DbSet<Contracheque>` + `DbSet<ItemContracheque>` + Global Query Filter
+- `src/Infrastructure/InfrastructureServiceExtensions.cs` — ATUALIZADO: `IContrachequeRepository` registrado
+- Migration `20260313175714_AddContracheque` — gerada e aplicada ao `vcorp_rh_dev`
+
+**API:**
+- `src/API/Controllers/ContrachequeController.cs` — rota `api/{empresaId:guid}/contracheque`: POST `/{fechamentoId}/gerar` (200), GET `/{id}` (200), GET `/fechamento/{fechamentoId}` (200)
+- `src/API/Program.cs` — ATUALIZADO: `CalculoEncargosFolhaService`, `GerarContrachequeUseCase`, `ListarContrachequesFolhaUseCase`, `ObterContrachequeUseCase` registrados como Scoped
+
+**Testes:**
+- `tests/Domain.Tests/Services/CalculoEncargosFolhaServiceTests.cs` — 8 testes (faixas INSS, IRRF isento/tributado, FGTS 8%, SalárioLíquido, guard salário ≤ 0)
+- `tests/Domain.Tests/Entities/ContrachequeTests.cs` — 8 testes (guards Criar, provento/desconto recalcula totais, FGTS informativo isolado, SalárioLíquido = Bruto - Descontos)
+- `tests/Domain.Tests/UseCases/GerarContrachequeUseCaseTests.cs` — 6 testes (EmpresaId vazio, FechamentoId vazio, fechamento não encontrado, sem funcionários, idempotência, INSS calculado)
+- **Total: 198/198 testes passando** ✅
+
+**Segurança (realizada nesta sessão):**
+- Chaves Gemini removidas do histórico git via `git-filter-repo` + force push
+- `appsettings.Development.json` removido do tracking git (`.gitignore` atualizado)
+- Nova chave JWT gerada (64 chars, HMAC-SHA256 safe) no `.env`
+- ⚠️ **Ação manual pendente:** Revogar chaves Gemini antigas em https://aistudio.google.com/app/apikey e gerar novas → inserir em `DEV_GEMINI_API_KEY` e `PROD_GEMINI_API_KEY` no arquivo `.env`
+
+| Camada | Status |
+|---|---|
+| **Domain** | ✅ `TipoRubrica`, `ItemContracheque`, `Contracheque`, `CalculoEncargosFolhaService` |
+| **Application** | ✅ 3 Use Cases + 2 DTOs + `IContrachequeRepository` |
+| **Infrastructure** | ✅ 2 Configurations, `ContrachequeRepository`, migration `AddContracheque` aplicada |
+| **API** | ✅ `ContrachequeController` — 3 endpoints |
+| **Testes** | ✅ 198/198 passando |
+
+---

@@ -144,6 +144,11 @@ builder.Services.AddScoped<ObterIndiceConformidadeUseCase>();
 builder.Services.AddScoped<Domain.Services.CalculoHoraExtraService>();
 builder.Services.AddScoped<FecharFolhaUseCase>();
 builder.Services.AddScoped<GerarRelatorioFolhaUseCase>();
+// M7 — Contracheque / Encargos
+builder.Services.AddScoped<Domain.Services.CalculoEncargosFolhaService>();
+builder.Services.AddScoped<GerarContrachequeUseCase>();
+builder.Services.AddScoped<ListarContrachequesFolhaUseCase>();
+builder.Services.AddScoped<ObterContrachequeUseCase>();
 
 // ─── Infrastructure (EF Core + Repositórios + UnitOfWork) ────────────────────
 builder.Services.AddInfrastructure(builder.Configuration);
