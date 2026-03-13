@@ -34,6 +34,33 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
 
 #### 📦 Histórico de Entregas
 
+##### `feat(frontend): implementa Frontend React — UploadFolhaPonto e DashboardAnomalias` — 13/03/2026
+> Frontend Web do Módulo 1 completo: Vite + React 19 + TypeScript + Tailwind CSS v4.
+> Página UploadFolhaPonto com Dropzone (drag-and-drop) chamando POST 202 Accepted.
+> Página DashboardAnomalias com tabela, badges de gravidade e cards de resumo.
+> Build de produção com 0 erros e 19 módulos transformados.
+
+**Arquivos entregues:**
+- `src/frontend/vite.config.ts` — proxy `/api` → API .NET, plugin `@tailwindcss/vite`
+- `src/frontend/src/index.css` — `@import 'tailwindcss'` (Tailwind v4)
+- `src/frontend/src/api/folhaPontoApi.ts` — cliente HTTP tipado: `uploadResumoFolha` e `buscarAnomalias`
+- `src/frontend/src/pages/UploadFolhaPonto.tsx` — Dropzone, seletor de período, feedback 202 Accepted
+- `src/frontend/src/pages/DashboardAnomalias.tsx` — tabela de alertas, badge de gravidade (1/2/3), cards de resumo
+- `src/frontend/src/App.tsx` — navegação entre páginas com estado local
+
+##### `feat(infrastructure+migrations): solution, migration InitialCreate e design-time factory` — 13/03/2026
+> Solution file consolidando todos os projetos. Migration InitialCreate gerada pelo EF Core 8
+> via IDesignTimeDbContextFactory (stub DesignTimeTenantProvider). 3 tabelas: Funcionarios
+> (com TurnoTrabalho como OwnsOne), RegistrosPonto e AlertasAnomalia.
+
+**Arquivos entregues:**
+- `Rh-Inteligente.sln` — solution com Domain, Application, Infrastructure, API e Domain.Tests
+- `src/Infrastructure/Persistence/RhInteligenteDbContextDesignTimeFactory.cs` — factory design-time com stub ITenantProvider
+- `src/Infrastructure/Persistence/Migrations/20260313052736_InitialCreate.cs` — migration completa das 3 tabelas
+- `src/Infrastructure/Persistence/Migrations/RhInteligenteDbContextModelSnapshot.cs` — snapshot do modelo EF
+
+---
+
 ##### `feat(infrastructure): implementa camada de persistência — EF Core 8, repositórios e multi-tenant` — 13/03/2026
 > Camada Infrastructure do Módulo 1 completa: DbContext com Global Query Filters por EmpresaId
 > (Regra 5 inegociável), 3 EntityTypeConfigurations mapeadas para Postgres, repositórios concretos,
@@ -143,10 +170,11 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
   * `GlobalExceptionHandler`: RFC 7807 ProblemDetails, mapeamento por tipo de exceção
   * `FolhaPontoController`: `POST /{empresaId}/upload` → 202 Accepted | `GET /{empresaId}/funcionarios/{id}/anomalias` → 200 OK
 
-* **Camada Frontend (React/Flutter):** ⏳ Pendente
-  * React: Página `UploadFolhaPonto` (Dropzone para os arquivos)
-  * React: Página `DashboardAnomalias` (Exibição da tabela de divergências gerada pela IA)
-  * Flutter: Tela `MeusRegistrosPonto` (Espelho de ponto do colaborador)
+* **Camada Frontend (React/Flutter):** 🟡 Em Andamento
+  * ✅ React: Página `UploadFolhaPonto` (Dropzone + chamada POST 202 Accepted)
+  * ✅ React: Página `DashboardAnomalias` (tabela de anomalias, badges de gravidade, cards de resumo)
+  * ✅ Cliente HTTP tipado `folhaPontoApi.ts` (mirrors DTOs da API)
+  * ⏳ Flutter: Tela `MeusRegistrosPonto` (Espelho de ponto do colaborador)
 
 * **Gaps Identificados:**
   * `TurnoTrabalho` não suporta turnos que cruzam a meia-noite (ex: 22h–06h). Para turnos noturnos, a `HoraSaida` deve ser representada como `DateTime` do dia seguinte — a ser tratado no Use Case de análise.

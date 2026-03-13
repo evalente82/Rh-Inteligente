@@ -16,3 +16,5 @@ C:\Users\endri\Desktop\Projetos\Rh-Inteligente\src\Infrastructure\obj\Debug\net8
 C:\Users\endri\Desktop\Projetos\Rh-Inteligente\src\Infrastructure\obj\Debug\net8.0\refint\Infrastructure.dll
 C:\Users\endri\Desktop\Projetos\Rh-Inteligente\src\Infrastructure\obj\Debug\net8.0\Infrastructure.pdb
 C:\Users\endri\Desktop\Projetos\Rh-Inteligente\src\Infrastructure\obj\Debug\net8.0\ref\Infrastructure.dll
+C:\Users\endri\Desktop\Projetos\Rh-Inteligente\src\Infrastructure\bin\Debug\net8.0\Infrastructure.runtimeconfig.json
+C:\Users\endri\Desktop\Projetos\Rh-Inteligente\src\Infrastructure\obj\Debug\net8.0\Infrastructure.genruntimeconfig.cache
