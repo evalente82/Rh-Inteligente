@@ -28,11 +28,25 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
 
 ### Módulo 1: Auditoria Inteligente de Ponto e Folha
 * **Descrição:** Upload de arquivos de ponto (csv/xlsx/txt), processamento, cruzamento de regras e devolução de alertas/erros gerados pela IA para o Gestor/Dono.
-* **Status Geral:** � Em Andamento
+* **Status Geral:** ✅ Concluído
 
 ---
 
 #### 📦 Histórico de Entregas
+
+##### `feat(mobile): implementa app Flutter — MeusRegistrosPonto com PontoApiService` — 13/03/2026
+> App Flutter do Módulo 1 completo: Flutter 3.32.4 / Dart 3.8.1, http + intl + flutter_localizations.
+> Tela MeusRegistrosPontoScreen com FutureBuilder, filtro de período (DatePicker PT-BR),
+> ListView de anomalias com chips de gravidade (Informativo/Atenção/Crítico) e status (Pendente/Resolvido).
+> PontoApiService espelha exatamente o endpoint GET da API C#. flutter analyze: 0 issues.
+
+**Arquivos entregues:**
+- `src/mobile/lib/models/alerta_anomalia_model.dart` — espelha `AlertaAnomaliaOutputDTO`; factory `fromJson`
+- `src/mobile/lib/services/ponto_api_service.dart` — HTTP GET para `/api/folhaponto/{empresaId}/funcionarios/{funcionarioId}/anomalias`; trata ProblemDetails RFC 7807
+- `src/mobile/lib/screens/meus_registros_ponto_screen.dart` — `StatefulWidget`, FutureBuilder, DatePicker PT-BR, `ListView.builder` com `_CardAnomalia`, `_ChipGravidade`, `_ChipStatus`
+- `src/mobile/lib/main.dart` — `VcorpApp` com `MaterialApp` tema índigo (Material 3), `flutter_localizations` PT-BR, rota para `MeusRegistrosPontoScreen`
+
+---
 
 ##### `feat(frontend): implementa Frontend React — UploadFolhaPonto e DashboardAnomalias` — 13/03/2026
 > Frontend Web do Módulo 1 completo: Vite + React 19 + TypeScript + Tailwind CSS v4.
@@ -170,11 +184,11 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
   * `GlobalExceptionHandler`: RFC 7807 ProblemDetails, mapeamento por tipo de exceção
   * `FolhaPontoController`: `POST /{empresaId}/upload` → 202 Accepted | `GET /{empresaId}/funcionarios/{id}/anomalias` → 200 OK
 
-* **Camada Frontend (React/Flutter):** 🟡 Em Andamento
+* **Camada Frontend (React/Flutter):** ✅ Concluído
   * ✅ React: Página `UploadFolhaPonto` (Dropzone + chamada POST 202 Accepted)
   * ✅ React: Página `DashboardAnomalias` (tabela de anomalias, badges de gravidade, cards de resumo)
   * ✅ Cliente HTTP tipado `folhaPontoApi.ts` (mirrors DTOs da API)
-  * ⏳ Flutter: Tela `MeusRegistrosPonto` (Espelho de ponto do colaborador)
+  * ✅ Flutter: Tela `MeusRegistrosPonto` (FutureBuilder, filtro de período, cards com chips de gravidade/status)
 
 * **Gaps Identificados:**
   * `TurnoTrabalho` não suporta turnos que cruzam a meia-noite (ex: 22h–06h). Para turnos noturnos, a `HoraSaida` deve ser representada como `DateTime` do dia seguinte — a ser tratado no Use Case de análise.
