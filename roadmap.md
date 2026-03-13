@@ -34,6 +34,20 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
 
 #### 📦 Histórico de Entregas
 
+##### `feat(api): implementa camada de apresentação — FolhaPontoController, GlobalExceptionHandler e Program.cs` — 13/03/2026
+> Camada API (Presentation) do Módulo 1 completa: controller RESTful com dois endpoints
+> (POST upload 202 Accepted e GET anomalias 200 OK), tratamento global de exceções nativo
+> do ASP.NET Core 8 via IExceptionHandler com ProblemDetails (RFC 7807) e
+> configuração mínima de Swagger/OpenAPI. Sem nenhuma lógica de negócio no controller.
+
+**Arquivos entregues:**
+- `src/API/API.csproj` — projeto SDK.Web net8.0 com Swashbuckle 6.5.0
+- `src/API/Program.cs` — bootstrap mínimo: controllers, Swagger, ExceptionHandler, Use Cases (Scoped)
+- `src/API/Middleware/GlobalExceptionHandler.cs` — IExceptionHandler: ArgumentException→400, InvalidOperationException→422, KeyNotFoundException→404, genérico→500
+- `src/API/Controllers/FolhaPontoController.cs` — POST `{empresaId}/upload` (202) e GET `{empresaId}/funcionarios/{funcionarioId}/anomalias` (200)
+
+---
+
 ##### `feat(application): implementa Use Cases, DTOs e interfaces de infraestrutura da Application Layer` — 13/03/2026
 > Camada Application do Módulo 1 completa: dois Use Cases com fluxo assíncrono (Regra 3),
 > DTOs de entrada/saída, IUnitOfWork e IAnalisadorBackgroundService.
@@ -95,9 +109,10 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
   * Interfaces: ✅ `IFuncionarioRepository`, `IRegistroPontoRepository`, `IAuditorIaService`, `IArmazenamentoArquivoService`, `IUnitOfWork`, `IAnalisadorBackgroundService`
   * Casos de Uso: ✅ `UploadResumoFolhaUseCase`, `AnalisarRegistrosComIaUseCase`
 
-* **Camada de Apresentação (C# .NET - API):** ⏳ Pendente
-  * Controllers: `FolhaPontoController`
-  * Endpoints: `POST /api/folhaponto/upload`, `GET /api/folhaponto/{id}/anomalias`
+* **Camada de Apresentação (C# .NET - API):** ✅ Concluído
+  * `Program.cs`: bootstrap mínimo, Swagger, GlobalExceptionHandler, Use Cases registrados (Scoped)
+  * `GlobalExceptionHandler`: RFC 7807 ProblemDetails, mapeamento por tipo de exceção
+  * `FolhaPontoController`: `POST /{empresaId}/upload` → 202 Accepted | `GET /{empresaId}/funcionarios/{id}/anomalias` → 200 OK
 
 * **Camada Frontend (React/Flutter):** ⏳ Pendente
   * React: Página `UploadFolhaPonto` (Dropzone para os arquivos)
