@@ -34,6 +34,25 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
 
 #### 📦 Histórico de Entregas
 
+##### `feat(application): implementa Use Cases, DTOs e interfaces de infraestrutura da Application Layer` — 13/03/2026
+> Camada Application do Módulo 1 completa: dois Use Cases com fluxo assíncrono (Regra 3),
+> DTOs de entrada/saída, IUnitOfWork e IAnalisadorBackgroundService.
+> Suite de testes unitários com 58/58 passando (xUnit + FluentAssertions + Moq).
+
+**Arquivos entregues:**
+- `src/Application/DTOs/UploadResumoFolhaInputDTO.cs` — record de entrada para upload de arquivo
+- `src/Application/DTOs/AnalisarRegistrosInputDTO.cs` — record de entrada para análise de IA
+- `src/Application/DTOs/AlertaAnomaliaOutputDTO.cs` — projeção de saída sem expor entidade de domínio
+- `src/Application/DTOs/OperacaoAceitaOutputDTO.cs` — resposta padrão 202 Accepted com ProcessoId
+- `src/Application/Interfaces/IUnitOfWork.cs` — abstração de controle de transação
+- `src/Application/Interfaces/IAnalisadorBackgroundService.cs` — contrato para enfileirar job de IA
+- `src/Application/UseCases/UploadResumoFolhaUseCase.cs` — aceita arquivo, persiste no storage, enfileira job; retorna 202
+- `src/Application/UseCases/AnalisarRegistrosComIaUseCase.cs` — orquestra IA, persiste alertas, commita transação
+- `tests/Domain.Tests/UseCases/UploadResumoFolhaUseCaseTests.cs` — 7 testes unitários
+- `tests/Domain.Tests/UseCases/AnalisarRegistrosComIaUseCaseTests.cs` — 10 testes unitários
+
+---
+
 ##### `feat(domain): implementa base da Domain Layer e interfaces da Application Layer` — 13/03/2026
 > Scaffolding inicial completo das camadas Domain e Application do Módulo 1.
 > Todos os arquivos são POCOs puros (.NET 8), sem nenhuma dependência externa na camada de domínio.
@@ -72,9 +91,9 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
   * Value Objects: `TurnoTrabalho`, `IntervaloTempo`
   * Domain Services: `CalculoHoraExtraService`
 
-* **Camada de Aplicação e IA (C# .NET - Application):** 🟡 Em Andamento
-  * Interfaces: ✅ `IFuncionarioRepository`, `IRegistroPontoRepository`, `IAuditorIaService`, `IArmazenamentoArquivoService`
-  * Casos de Uso: ⏳ `UploadResumoFolhaUseCase`, `AnalisarRegistrosComIaUseCase`
+* **Camada de Aplicação e IA (C# .NET - Application):** ✅ Concluído
+  * Interfaces: ✅ `IFuncionarioRepository`, `IRegistroPontoRepository`, `IAuditorIaService`, `IArmazenamentoArquivoService`, `IUnitOfWork`, `IAnalisadorBackgroundService`
+  * Casos de Uso: ✅ `UploadResumoFolhaUseCase`, `AnalisarRegistrosComIaUseCase`
 
 * **Camada de Apresentação (C# .NET - API):** ⏳ Pendente
   * Controllers: `FolhaPontoController`
