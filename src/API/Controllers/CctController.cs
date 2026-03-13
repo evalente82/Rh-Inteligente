@@ -1,5 +1,6 @@
 using Application.DTOs;
 using Application.UseCases;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -12,6 +13,7 @@ namespace API.Controllers;
 [ApiController]
 [Route("api/{empresaId:guid}/cct")]
 [Produces("application/json")]
+[Authorize(Roles = "Dono,Gestor")]
 public sealed class CctController : ControllerBase
 {
     private readonly ProcessarCctUseCase _processarCctUseCase;

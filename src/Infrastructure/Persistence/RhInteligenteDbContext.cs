@@ -19,10 +19,13 @@ public sealed class RhInteligenteDbContext : DbContext
         _empresaId = tenantProvider.EmpresaId;
     }
 
+    public DbSet<Empresa> Empresas => Set<Empresa>();
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<Funcionario> Funcionarios => Set<Funcionario>();
     public DbSet<Admissao> Admissoes => Set<Admissao>();
     public DbSet<RegistroPonto> RegistrosPonto => Set<RegistroPonto>();
     public DbSet<AlertaAnomalia> AlertasAnomalia => Set<AlertaAnomalia>();
+    public DbSet<FechamentoFolha> FechamentosFolha => Set<FechamentoFolha>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,6 +44,14 @@ public sealed class RhInteligenteDbContext : DbContext
 
         modelBuilder.Entity<AlertaAnomalia>()
             .HasQueryFilter(a => a.EmpresaId == _empresaId);
+
+        modelBuilder.Entity<FechamentoFolha>()
+            .HasQueryFilter(f => f.EmpresaId == _empresaId);
+
+        modelBuilder.Entity<Usuario>()
+            .HasQueryFilter(u => u.EmpresaId == _empresaId);
+
+        // Empresa não tem EmpresaId próprio — é o próprio tenant root (sem filter)
 
         base.OnModelCreating(modelBuilder);
     }

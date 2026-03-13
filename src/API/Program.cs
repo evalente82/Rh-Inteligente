@@ -2,6 +2,10 @@ using API.Middleware;
 using Application.UseCases;
 using DotNetEnv;
 using Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
 
 // ─── Carrega o .env da raiz do repositório ────────────────────────────────────
 // O arquivo .env está dois níveis acima de src/API (raiz do repositório).
@@ -50,6 +54,12 @@ if (!string.IsNullOrWhiteSpace(qdrantPort))
 if (!string.IsNullOrWhiteSpace(qdrantPrefix))
     builder.Configuration["Qdrant:AmbientePrefix"] = qdrantPrefix;
 
+// JWT secret via .env
+var jwtPrefix = builder.Environment.IsProduction() ? "PROD_" : "DEV_";
+var jwtSecret = Environment.GetEnvironmentVariable($"{jwtPrefix}JWT_SECRET");
+if (!string.IsNullOrWhiteSpace(jwtSecret))
+    builder.Configuration["Jwt:SecretKey"] = jwtSecret;
+
 // ─── Serviços ────────────────────────────────────────────────────────────────
 
 builder.Services.AddControllers();
@@ -62,13 +72,57 @@ builder.Services.AddSwaggerGen(options =>
     {
         Title = "Vcorp Folha IA — API",
         Version = "v1",
-        Description = "API de Auditoria Inteligente de Ponto e Folha (Módulo 1)"
+        Description = "API de Auditoria Inteligente de Ponto e Folha"
+    });
+
+    // Suporte a JWT Bearer no Swagger UI
+    var jwtScheme = new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Informe o token JWT. Ex: Bearer {token}"
+    };
+    options.AddSecurityDefinition("Bearer", jwtScheme);
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
     });
 });
 
 // Tratamento global de exceções nativo do ASP.NET Core 8
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+
+// ─── JWT Bearer Authentication (M4) ──────────────────────────────────────────
+var jwtKey = builder.Configuration["Jwt:SecretKey"]
+    ?? throw new InvalidOperationException("Jwt:SecretKey não configurada. Verifique o .env.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opts =>
+    {
+        opts.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer           = true,
+            ValidateAudience         = true,
+            ValidateLifetime         = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer              = builder.Configuration["Jwt:Issuer"] ?? "VcorpRhInteligente",
+            ValidAudience            = builder.Configuration["Jwt:Audience"] ?? "VcorpRhInteligenteUsers",
+            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew                = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 // ─── Use Cases (Application Layer) ───────────────────────────────────────────
 builder.Services.AddScoped<UploadResumoFolhaUseCase>();
@@ -79,6 +133,17 @@ builder.Services.AddScoped<ListarFuncionariosUseCase>();
 builder.Services.AddScoped<DemitirFuncionarioUseCase>();
 builder.Services.AddScoped<ProcessarCctUseCase>();
 builder.Services.AddScoped<GerarHoleriteNarrativoUseCase>();
+// M4 — Auth
+builder.Services.AddScoped<CriarEmpresaUseCase>();
+builder.Services.AddScoped<RegistrarUsuarioUseCase>();
+builder.Services.AddScoped<LoginUseCase>();
+// M5 — Dashboard
+builder.Services.AddScoped<ObterDashboardRiscoUseCase>();
+builder.Services.AddScoped<ObterIndiceConformidadeUseCase>();
+// M6 — Fechamento de Folha
+builder.Services.AddScoped<Domain.Services.CalculoHoraExtraService>();
+builder.Services.AddScoped<FecharFolhaUseCase>();
+builder.Services.AddScoped<GerarRelatorioFolhaUseCase>();
 
 // ─── Infrastructure (EF Core + Repositórios + UnitOfWork) ────────────────────
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -98,6 +163,8 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

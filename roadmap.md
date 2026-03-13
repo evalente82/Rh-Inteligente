@@ -349,3 +349,107 @@ O desenvolvimento será rigorosamente modular, limpo e escalável, com foco máx
 | **Testes** | ✅ 109/109 passando |
 
 ---
+
+### Módulo 4: Auth JWT + Multi-tenant
+* **Descrição:** Autenticação com JWT Bearer, roles (Dono/Gestor/Colaborador), criação de tenant (Empresa) e gestão de usuários. Migration `AddEmpresaAndUsuario` aplicada.
+* **Status Geral:** ✅ Concluído
+
+#### 📦 Histórico de Entregas
+
+##### `feat(modulo4): implementa Auth JWT + Multi-tenant — Domain, Application, Infrastructure e API` — 13/03/2026
+> M4 completo: Email VO, Empresa e Usuario entities, BCrypt work factor 12, JWT access+refresh token,
+> EF Core owned type para Email, migrations aplicadas, 150/150 testes passando.
+
+**Domain:** `Role.cs` (enum), `Email.cs` (VO sealed record), `Empresa.cs` (CNPJ 14 dígitos, CnpjFormatado), `Usuario.cs` (RefreshToken, Desativar, RevogarRefreshToken)
+**Application:** `IEmpresaRepository`, `IUsuarioRepository`, `ISenhaHasher`, `IJwtService` + DTOs: `CriarEmpresaInputDTO`, `RegistrarUsuarioInputDTO`, `LoginInputDTO`, `TokenOutputDTO`, `EmpresaOutputDTO` + Use Cases: `CriarEmpresaUseCase`, `RegistrarUsuarioUseCase`, `LoginUseCase`
+**Infrastructure:** `BcryptSenhaHasher` (work factor 12), `JwtService` (HmacSha256), `EmpresaRepository`, `UsuarioRepository`, `EmpresaConfiguration`, `UsuarioConfiguration` (OwnsOne Email → coluna EmailEndereco)
+**API:** `EmpresaController` (POST /api/empresas — público), `AuthController` (login AllowAnonymous + registrar Authorize Dono/Gestor), JWT Bearer em Program.cs, Swagger com AddSecurityDefinition
+**Testes:** 6 arquivos — `CriarEmpresaUseCaseTests` (4), `RegistrarUsuarioUseCaseTests` (4), `LoginUseCaseTests` (5), `EmpresaTests` (5), `UsuarioTests` (6), `EmailTests` (5) — **150/150 ✅**
+**Migration:** `AddEmpresaAndUsuario` — aplicada ao `vcorp_rh_dev`
+
+| Camada | Status |
+|---|---|
+| **Domain** | ✅ `Role`, `Email` VO, `Empresa`, `Usuario` |
+| **Application** | ✅ 3 Use Cases + 5 DTOs + 4 Interfaces |
+| **Infrastructure** | ✅ BCrypt, JWT, 2 repositórios, 2 configurations, migration aplicada |
+| **API** | ✅ `EmpresaController`, `AuthController` |
+| **Testes** | ✅ 150/150 passando |
+
+---
+
+### Módulo 5: Dashboard de Risco Trabalhista
+* **Descrição:** Endpoints analíticos que agregam alertas por tipo, calculam o Índice de Conformidade Trabalhista e expõem top funcionários em risco. Frontend React com Recharts.
+* **Status Geral:** ✅ Concluído
+
+#### 📦 Histórico de Entregas
+
+##### `feat(modulo5): implementa Dashboard de Risco — Application, Infrastructure, API e Frontend React` — 13/03/2026
+> M5 completo: 2 Use Cases (dashboard + conformidade), AlertaAnomaliaQueryRepository (AsNoTracking),
+> DashboardController, página DashboardRisco.tsx com Recharts (BarChart empilhado + gauge SVG),
+> dashboardApi.ts, react-is instalado, build OK, 158/158 testes passando.
+
+**Application:** `IAlertaAnomaliaQueryRepository`, `DashboardRiscoOutputDTO`, `IndiceConformidadeOutputDTO`, `ObterDashboardRiscoUseCase` (top 5 por críticos), `ObterIndiceConformidadeUseCase` (Verde ≥90 / Amarelo ≥70 / Vermelho <70)
+**Infrastructure:** `AlertaAnomaliaQueryRepository` (AsNoTracking, DateOnly range)
+**API:** `DashboardController` — `GET /{empresaId}/dashboard/risco` + `GET /{empresaId}/dashboard/conformidade` (Authorize Dono,Gestor)
+**Frontend:** `src/frontend/src/api/dashboardApi.ts`, `src/frontend/src/pages/DashboardRisco.tsx` (Recharts BarChart empilhado, gauge semicircular SVG, tabela top funcionários), `App.tsx` atualizado com nova rota "Dashboard de Risco"
+**Testes:** `ObterDashboardRiscoUseCaseTests` (4), `ObterIndiceConformidadeUseCaseTests` (4) — **158/158 ✅**
+
+| Camada | Status |
+|---|---|
+| **Application** | ✅ 2 Use Cases + 2 DTOs + 1 Interface |
+| **Infrastructure** | ✅ `AlertaAnomaliaQueryRepository` |
+| **API** | ✅ `DashboardController` — 2 endpoints |
+| **Frontend** | ✅ `DashboardRisco.tsx` + `dashboardApi.ts` — build OK |
+| **Testes** | ✅ 158/158 passando |
+
+---
+
+### Módulo 6: Fechamento de Folha Inteligente
+* **Descrição:** Consolida o período de ponto, calcula horas extras e descontos por funcionário, registra anomalias críticas e gera relatório narrativo com contexto CCT via RAG. Ciclo de vida: Aberta → Fechada → Aprovada.
+* **Status Geral:** ✅ Concluído
+
+#### 📦 Histórico de Entregas
+
+##### `feat(modulo6): implementa Fechamento de Folha — Domain, Application, Infrastructure, API e Testes` — 13/03/2026
+> M6 completo: entidade FechamentoFolha (ciclo Aberta→Fechada→Aprovada), FecharFolhaUseCase
+> (consolida HE/descontos por dia via CalculoHoraExtraService), GerarRelatorioFolhaUseCase
+> (RAG Qdrant + narrativa estruturada), FolhaController, migration AddFechamentoFolha aplicada,
+> 174/174 testes passando.
+
+**Domain:**
+- `src/Domain/Enums/StatusFolha.cs` — Aberta=1, Fechada=2, Aprovada=3
+- `src/Domain/Entities/FechamentoFolha.cs` — `Abrir()`, `Fechar()`, `Aprovar()`, `AtualizarRelatorio()`; guards: período inválido, duplicata de status
+
+**Application:**
+- `src/Application/Interfaces/IFechamentoFolhaRepository.cs` — `ObterPorIdAsync`, `ObterAbertoPorPeriodoAsync`, `AdicionarAsync`, `Atualizar`
+- `src/Application/DTOs/FecharFolhaInputDTO.cs` — EmpresaId, PeriodoInicio, PeriodoFim
+- `src/Application/DTOs/FechamentoFolhaOutputDTO.cs` — projeção completa com Status, HorasExtras, Descontos, RelatorioNarrativo
+- `src/Application/UseCases/FecharFolhaUseCase.cs` — agrupa registros por dia, `CalculoHoraExtraService` diário, contabiliza críticos, persiste
+- `src/Application/UseCases/GerarRelatorioFolhaUseCase.cs` — embedding RAG → BuscarSimilaresAsync CCT → narrativa estruturada, `AtualizarRelatorio()`
+
+**Infrastructure:**
+- `src/Infrastructure/Persistence/Configurations/FechamentoFolhaConfiguration.cs` — `numeric(8,2)`, índice único EmpresaId+PeriodoInicio+PeriodoFim
+- `src/Infrastructure/Persistence/Repositories/FechamentoFolhaRepository.cs`
+- `RhInteligenteDbContext` — ATUALIZADO: `DbSet<FechamentoFolha>` + Global Query Filter
+- `InfrastructureServiceExtensions` — ATUALIZADO: `IFechamentoFolhaRepository` registrado
+- Migration `AddFechamentoFolha` — gerada e aplicada ao `vcorp_rh_dev`
+
+**API:**
+- `src/API/Controllers/FolhaController.cs` — `POST /api/{empresaId}/folha/fechar` (200) | `GET /api/{empresaId}/folha/{fechamentoId}/relatorio` (200)
+- `src/API/Program.cs` — ATUALIZADO: `CalculoHoraExtraService`, `FecharFolhaUseCase`, `GerarRelatorioFolhaUseCase` registrados
+
+**Testes:**
+- `tests/Domain.Tests/Entities/FechamentoFolhaTests.cs` — 6 testes (ciclo de vida, guards)
+- `tests/Domain.Tests/UseCases/FecharFolhaUseCaseTests.cs` — 5 testes (sem funcionários, duplicata, período inválido, EmpresaId vazio, anomalias críticas)
+- `tests/Domain.Tests/UseCases/GerarRelatorioFolhaUseCaseTests.cs` — 4 testes (relatório gerado, não encontrado, ID vazio, contexto CCT)
+- **Total: 174/174 testes passando** ✅
+
+| Camada | Status |
+|---|---|
+| **Domain** | ✅ `StatusFolha`, `FechamentoFolha` |
+| **Application** | ✅ 2 Use Cases + 2 DTOs + 1 Interface |
+| **Infrastructure** | ✅ Configuration, Repository, migration `AddFechamentoFolha` aplicada |
+| **API** | ✅ `FolhaController` — 2 endpoints |
+| **Testes** | ✅ 174/174 passando |
+
+---

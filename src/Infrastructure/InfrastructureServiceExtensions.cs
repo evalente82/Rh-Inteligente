@@ -1,5 +1,6 @@
 using Application.Interfaces;
 using Infrastructure.AI;
+using Infrastructure.Auth;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -42,9 +43,22 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IFuncionarioRepository, FuncionarioRepository>();
         services.AddScoped<IRegistroPontoRepository, RegistroPontoRepository>();
         services.AddScoped<IAdmissaoRepository, AdmissaoRepository>();
+        services.AddScoped<IEmpresaRepository, EmpresaRepository>();
+        services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+        services.AddScoped<IAlertaAnomaliaQueryRepository, AlertaAnomaliaQueryRepository>();
+        services.AddScoped<IFechamentoFolhaRepository, FechamentoFolhaRepository>();
 
         // ─── Unit of Work ─────────────────────────────────────────────────────
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+
+        // ─── Auth (M4) ────────────────────────────────────────────────────────
+        services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
+        services.AddScoped<ISenhaHasher, BcryptSenhaHasher>();
+        services.AddScoped<IJwtService, JwtService>();
+
+        // ─── Storage / Background (stubs para Dev — trocar em Prod) ──────────
+        services.AddScoped<IArmazenamentoArquivoService, LocalArmazenamentoArquivoService>();
+        services.AddScoped<IAnalisadorBackgroundService, NoOpAnalisadorBackgroundService>();
 
         // ─── IA / RAG (Módulo 3) ──────────────────────────────────────────────
         services.Configure<GeminiOptions>(

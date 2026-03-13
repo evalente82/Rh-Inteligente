@@ -1,5 +1,6 @@
 using Application.DTOs;
 using Application.UseCases;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -11,6 +12,7 @@ namespace API.Controllers;
 [ApiController]
 [Route("api/{empresaId:guid}/funcionarios")]
 [Produces("application/json")]
+[Authorize(Roles = "Dono,Gestor")]
 public sealed class FuncionarioController : ControllerBase
 {
     private readonly CadastrarFuncionarioUseCase _cadastrarUseCase;

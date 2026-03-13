@@ -1,5 +1,6 @@
 using Application.DTOs;
 using Application.UseCases;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -11,6 +12,7 @@ namespace API.Controllers;
 [ApiController]
 [Route("api/folhaponto")]
 [Produces("application/json")]
+[Authorize]
 public sealed class FolhaPontoController : ControllerBase
 {
     private readonly UploadResumoFolhaUseCase _uploadUseCase;
