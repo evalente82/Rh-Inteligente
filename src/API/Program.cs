@@ -2,6 +2,7 @@ using API.Middleware;
 using Application.UseCases;
 using DotNetEnv;
 using Infrastructure;
+using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -171,6 +172,14 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// ─── Seed de dados de demonstração ───────────────────────────────────────────
+// Garante que os tenants, usuários e funcionários de exemplo existam em qualquer ambiente.
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+    await seeder.SeedAsync();
+}
 
 app.Run();
 

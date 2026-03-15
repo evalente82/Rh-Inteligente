@@ -39,6 +39,16 @@ public static class InfrastructureServiceExtensions
             });
         });
 
+        // Factory para o DataSeeder (usa SystemTenantProvider — sem filtro de tenant)
+        // Registrada como Singleton usando as mesmas options do DbContext principal
+        services.AddSingleton<IDbContextFactory<RhInteligenteDbContext>>(sp =>
+        {
+            var opts = sp.GetRequiredService<DbContextOptions<RhInteligenteDbContext>>();
+            return new SeedDbContextFactory(opts);
+        });
+
+        services.AddTransient<DataSeeder>();
+
         // ─── Repositórios ─────────────────────────────────────────────────────
         services.AddScoped<IFuncionarioRepository, FuncionarioRepository>();
         services.AddScoped<IRegistroPontoRepository, RegistroPontoRepository>();

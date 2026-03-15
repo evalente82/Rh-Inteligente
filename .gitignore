@@ -4,9 +4,11 @@
 .env.*.local
 
 ## Segredos de produção
+appsettings.Development.json
 appsettings.Production.json
 appsettings.*.Secret.json
 secrets.json
+UserSecrets/
 
 ## .NET build outputs
 bin/
