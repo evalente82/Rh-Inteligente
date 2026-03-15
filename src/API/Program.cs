@@ -9,10 +9,17 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 
 // ─── Carrega o .env da raiz do repositório ────────────────────────────────────
-// O arquivo .env está dois níveis acima de src/API (raiz do repositório).
+// O arquivo .env está na raiz do repositório.
+// Em runtime, GetCurrentDirectory() aponta para bin/Debug/net8.0 → subir 4 níveis.
 // Em produção o arquivo pode não existir (variáveis injetadas pelo host/CI-CD).
-var raizRepo = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".."));
+var raizRepo = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 var envFile = Path.Combine(raizRepo, ".env");
+if (!File.Exists(envFile))
+{
+    // Fallback: tenta a raiz do repositório a partir do diretório atual (útil em CI/CD)
+    raizRepo = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".."));
+    envFile = Path.Combine(raizRepo, ".env");
+}
 if (File.Exists(envFile))
     Env.Load(envFile);
 
